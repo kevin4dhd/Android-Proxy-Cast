@@ -157,16 +157,23 @@ public class WebProxy extends ServerProxy {
                     byte[] buffer = new byte[1024 * 32];
                     int count = 0, n= 0;
                     while (-1 != (n = input.read(buffer))) {
-                        //String finalString = new String(buffer);
-                        //Log.e(TAG, "path output: " + finalString);
-                        if (n > 0) {
-                            output.write(buffer, 0, n);
-                            output.flush();
+                        try {
+                            //String finalString = new String(buffer);
+                            //Log.e(TAG, "path output: " + finalString);
+                            if (n > 0) {
+                                output.write(buffer, 0, n);
+                                output.flush();
+                            }
+                            count += n;
                         }
-                        count += n;
+                        catch(IOException e) {
+                            Log.e(TAG, "Connection closed by client before transfer of proxied response is complete", e);
+                            break;
+                        }
                     }
                     output.flush();
                     output.close();
+                    input.close();
                 //} else {
                 //    Log.e(TAG, "response code: " + String.valueOf(respCode) + " @ " + path);
                 //}
