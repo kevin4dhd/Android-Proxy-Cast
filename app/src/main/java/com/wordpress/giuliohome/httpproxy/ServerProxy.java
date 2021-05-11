@@ -15,12 +15,14 @@ import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import android.content.Context;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
@@ -41,7 +43,7 @@ public abstract class ServerProxy implements Runnable {
             socket.setSoTimeout(5000);
             port = 8000; // socket.getLocalPort();
             this.context = context;
-            socket.bind(new InetSocketAddress(InetAddress.getByName("192.168.1.7"), port));
+            socket.bind(new InetSocketAddress(InetAddress.getByName(findIPAddress(context)), port));
         } catch (UnknownHostException e) { // impossible
         } catch (IOException e) {
             Log.e(TAG, "IOException initializing server", e);
@@ -64,6 +66,30 @@ public abstract class ServerProxy implements Runnable {
         if(thread != null) {
             thread.interrupt();
         }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Error al apagar el socket: .", e);
+        }
+    }
+
+    public static String findIPAddress(Context context){
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        try {
+            if (wifiManager.getConnectionInfo() != null) {
+                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                return InetAddress.getByAddress(
+                        ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+                                .putInt(wifiInfo.getIpAddress())
+                                .array()
+                ).getHostAddress();
+            } else{
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error finding IpAddress: "+e.getLocalizedMessage());
+        }
+        return null;
     }
 
     public String getPrivateAddress(String request) {

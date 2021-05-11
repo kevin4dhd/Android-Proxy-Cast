@@ -141,7 +141,7 @@ public class WebProxy extends ServerProxy {
                     }
                 }
                 int respCode = connection.getResponseCode();
-                Log.e(TAG, "response code: " + String.valueOf(respCode) + " @ " + path);
+                Log.d(TAG, "response code: " + String.valueOf(respCode) + " @ " + path);
                 //if(respCode == HttpURLConnection.HTTP_OK || respCode == HttpURLConnection.HTTP_PARTIAL
                 //|| respCode == 301) {
                     responseHeaders = getHeaders(connection.getHeaderFields());
@@ -154,22 +154,14 @@ public class WebProxy extends ServerProxy {
 
 
                     input = connection.getInputStream();
-                    byte[] buffer = new byte[1024 * 32];
+                    byte[] buffer = new byte[4096];
                     int count = 0, n= 0;
                     while (-1 != (n = input.read(buffer))) {
-                        try {
-                            //String finalString = new String(buffer);
-                            //Log.e(TAG, "path output: " + finalString);
-                            if (n > 0) {
-                                output.write(buffer, 0, n);
-                                output.flush();
-                            }
-                            count += n;
+                        if (n > 0) {
+                            output.write(buffer, 0, n);
+                            output.flush();
                         }
-                        catch(IOException e) {
-                            Log.e(TAG, "Connection closed by client before transfer of proxied response is complete", e);
-                            break;
-                        }
+                        count += n;
                     }
                     output.flush();
                     output.close();
